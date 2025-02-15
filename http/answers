@@ -1,15 +1,15 @@
 KEYMAPOPTS="us us"
-HOSTNAMEOPTS="-n yawollet"
+HOSTNAMEOPTS="yawollet"
 INTERFACESOPTS="auto lo
 iface lo inet loopback
 
 auto eth0
 iface eth0 inet dhcp
 "
-DNSOPTS="-n 1.1.1.1"
-TIMEZONEOPTS="-z UTC"
+DNSOPTS="1.1.1.1"
+TIMEZONEOPTS="UTC"
 PROXYOPTS="none"
 APKREPOSOPTS="-1"
-SSHDOPTS="-c openssh"
-NTPOPTS="-c chrony"
-DISKOPTS="-L -s 0 -m sys /dev/sda"
+SSHDOPTS="openssh"
+NTPOPTS="chrony"
+DISKOPTS="-L -s 0 -m sys /dev/vda"
