@@ -1,53 +1,65 @@
 {
+  "variables": {
+    "name": "alpine",
+    "version": "320",
+    "cpus": "1",
+    "disk": "1000",
+    "mem": "2048",
+    "iso_checksum": "file:https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-virt-3.20.6-x86_64.iso.sha256",
+    "iso_url": "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-virt-3.20.6-x86_64.iso",
+    "headless": "true"
+  },
   "builders": [
     {
+      "name": "{{user `name`}}{{user `version`}}",
+      "type": "qemu",
+      "format": "qcow2",
+      "qemu_binary": "/opt/homebrew/bin/qemu-system-x86_64",
+      "net_device": "virtio-net",
+      "disk_interface": "virtio",
+      "disk_cache": "none",
+      "qemuargs": [
+        [ "-m", "{{user `mem`}}M" ],
+        [ "-smp", "{{user `cpus`}}"],
+        ["-boot", "menu=on,order=c,once=d"]
+      ],
+      "headless": "{{user `headless`}}",
+      "disk_size": "{{user `disk`}}",
+      "http_directory": "http",
+      "output_directory": "images",
+      "iso_url": "{{user `iso_url`}}",
+      "iso_checksum": "{{user `iso_checksum`}}",
+      "shutdown_command": "/sbin/poweroff",
+      "boot_wait": "20s",
       "boot_command": [
         "root<enter><wait>",
         "passwd<enter>{{user `root_pw`}}<enter>{{user `root_pw`}}<enter>",
-        "apk add openssh<enter>",
-        "echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config<enter>",
         "ifconfig lo up<enter>",
         "ifconfig eth0 up<enter>",
         "udhcpc -i eth0<enter><wait5>",
-        "/etc/init.d/sshd start<enter><wait>",
+        "apk add openssh<enter>",
+        "echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config<enter>",
+        "rc-service sshd start<enter><wait>",
         "wget http://{{ .HTTPIP }}:{{ .HTTPPort }}/answers<enter><wait>",
         "BOOT_SIZE=50 setup-alpine -f answers<enter><wait10>",
         "{{user `root_pw`}}<enter><wait>",
         "{{user `root_pw`}}<enter><wait15>",
         "no<enter><wait5>",
         "<wait>y<enter><wait15>",
-        "<wait15>",
         "mount /dev/vg0/lv_root /mnt<enter>",
         "echo 'PermitRootLogin yes' >> /mnt/etc/ssh/sshd_config<enter>",
         "umount /mnt<enter>",
-        "echo reboot<enter>"
+        "sleep 3600<enter>",
+        "reboot<enter>"
       ],
-      "disk_size": "{{user `disk`}}",
-      "http_directory": "http",
-      "iso_checksum": "file:https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-virt-3.20.6-x86_64.iso.sha256",
-      "iso_url": "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-virt-3.20.6-x86_64.iso",
-      "shutdown_command": "/sbin/poweroff",
+      "vnc_bind_address": "0.0.0.0",
       "ssh_password": "{{user `root_pw`}}",
       "ssh_username": "root",
-      "boot_wait": "20s",
-      "type": "qemu",
-      "format": "qcow2",
-      "vnc_bind_address": "0.0.0.0",
+      "ssh_wait_timeout": "30m",
       "ssh_handshake_attempts": 20,
       "ssh_host_port_min": 2222,
       "ssh_host_port_max": 2229,
-      "qemu_binary": "/opt/homebrew/bin/qemu-system-x86_64",
-      "use_default_display": true,
-      "net_device": "virtio-net",
-      "output_directory": "images",
-      "disk_interface": "virtio",
-      "headless": true,
-      "qemuargs": [
-        [ "-m", "{{user `mem`}}G" ],
-        [ "-smp", "{{user `cpus`}}"],
-        ["-boot", "menu=on,order=c,once=d"]
-      ],
-      "vm_name": "alpine320"
+      "use_default_display": true
     }
   ],
   "provisioners": [
@@ -58,13 +70,7 @@
         "scripts/01_openstack.sh",
         "scripts/99_cleanup.sh"
       ],
-      "expect_disconnect": true
     }
-  ],
-  "variables": {
-    "cpus": "1",
-    "disk": "1000",
-    "mem": "2"
-  }
+  ]
 }
 
