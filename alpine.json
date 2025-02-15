@@ -3,65 +3,68 @@
     {
       "boot_command": [
         "root<enter><wait>",
-        "ifconfig eth0 up \u0026\u0026 udhcpc -i eth0<enter><wait5>",
+        "passwd<enter>{{user `root_pw`}}<enter>{{user `root_pw`}}<enter>",
+        "apk add openssh<enter>",
+        "echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config<enter>",
+        "ifconfig lo up<enter>",
+        "ifconfig eth0 up<enter>",
+        "udhcpc -i eth0<enter><wait5>",
+        "/etc/init.d/sshd start<enter><wait>",
         "wget http://{{ .HTTPIP }}:{{ .HTTPPort }}/answers<enter><wait>",
         "BOOT_SIZE=50 setup-alpine -f answers<enter><wait10>",
         "{{user `root_pw`}}<enter><wait>",
         "{{user `root_pw`}}<enter><wait15>",
         "no<enter><wait5>",
         "<wait>y<enter><wait15>",
-        "rc-service sshd stop<enter>",
+        "<wait15>",
         "mount /dev/vg0/lv_root /mnt<enter>",
         "echo 'PermitRootLogin yes' >> /mnt/etc/ssh/sshd_config<enter>",
         "umount /mnt<enter>",
-        "reboot<enter>"
+        "echo reboot<enter>"
       ],
       "disk_size": "{{user `disk`}}",
-      "guest_additions_mode": "disable",
-      "guest_os_type": "Linux_64",
       "http_directory": "http",
-      "iso_checksum": "file:https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-virt-3.20.2-x86_64.iso.sha256",
-      "iso_url": "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-virt-3.20.2-x86_64.iso",
+      "iso_checksum": "file:https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-virt-3.20.6-x86_64.iso.sha256",
+      "iso_url": "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-virt-3.20.6-x86_64.iso",
       "shutdown_command": "/sbin/poweroff",
       "ssh_password": "{{user `root_pw`}}",
       "ssh_username": "root",
-      "type": "virtualbox-iso",
-      "vboxmanage": [
-        [
-          "modifyvm",
-          "{{ .Name }}",
-          "--memory",
-          "{{ user `mem`}}"
-        ],
-        [
-          "modifyvm",
-          "{{ .Name }}",
-          "--cpus",
-          "{{user `cpus`}}"
-        ]
+      "boot_wait": "20s",
+      "type": "qemu",
+      "format": "qcow2",
+      "vnc_bind_address": "0.0.0.0",
+      "ssh_handshake_attempts": 20,
+      "ssh_host_port_min": 2222,
+      "ssh_host_port_max": 2229,
+      "qemu_binary": "/opt/homebrew/bin/qemu-system-x86_64",
+      "use_default_display": true,
+      "net_device": "virtio-net",
+      "output_directory": "images",
+      "disk_interface": "virtio",
+      "headless": true,
+      "qemuargs": [
+        [ "-m", "{{user `mem`}}G" ],
+        [ "-smp", "{{user `cpus`}}"],
+        ["-boot", "menu=on,order=c,once=d"]
       ],
       "vm_name": "alpine320"
     }
   ],
   "provisioners": [
     {
-      "override": {
-        "virtualbox-iso": {
-          "execute_command": "/bin/sh '{{ .Path }}'"
-        }
-      },
+      "type": "shell",
       "scripts": [
         "scripts/00_base.sh",
         "scripts/01_openstack.sh",
         "scripts/99_cleanup.sh"
       ],
-      "type": "shell"
+      "expect_disconnect": true
     }
   ],
   "variables": {
     "cpus": "1",
-    "disk": "950",
-    "mem": "512"
+    "disk": "1000",
+    "mem": "2"
   }
 }
 
